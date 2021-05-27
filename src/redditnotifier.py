@@ -120,6 +120,7 @@ def getListings(subreddit, limit, old_headers, last_post, retries):
                 log.warn(f"Got error status when querying listings {ret.status_code}, refreshing OAuth2 token...")
                 access_token = getToken(api_key, secret_key, old_headers, access_token_retries)
                 headers = {**old_headers, **{'Authorization': f"bearer {access_token}"}}
+                time.sleep(5)
                 continue
             return ret
         except:
@@ -170,7 +171,7 @@ if __name__ == "__main__":
         last_names = deque([])
         while 1:
             #log.info(f"deque size={len(last_names)}")
-            if (i == num_checks_retro_check) or (last_post is None):
+            if (i == num_checks_retro_check):
                 #log.info("retro check")
                 ret = getListings(subreddit, limit, headers, None, listings_query_retries)
                 retro_listings = ret.json()["data"]["children"]
@@ -178,19 +179,31 @@ if __name__ == "__main__":
                 #log.info("last_names: " + str(last_names))
                 #log.info("listings: " + str(listings))
                 i = 0
-            else:
+            elif last_post is not None:
                 #log.info("regular check")
                 ret = getListings(subreddit, limit, headers, last_post, listings_query_retries)
                 #log.info(json.dumps(ret.json(), indent=2))
+                new_listings = ret.json()["data"]["children"]
+                listings = [x for x in new_listings if x["data"]["name"] not in last_names]
+                if (len(new_listings) != len(listings)):
+                    new_listings_names = [x["data"]["name"] for x in new_listings]
+                    log.warn("Got new listings from Reddit, but we've already seen these!")
+                    log.warn(f"Reddit New Listing names: {new_listings_names}")
+                    log.warn(f"Current names registry: {last_names}")
+                    diff_listings = [x["data"]["title"] for x in new_listings if x in last_names]
+                    log.warn(f"Difference: {diff_listings}")
+                i += 1
+            else:
+                ret = getListings(subreddit, int(limit) * 2, headers, None, listings_query_retries)
                 listings = ret.json()["data"]["children"]
                 i += 1
             if (len(listings) > 0):
                 # Left is the head of the queue, so we insert the new listings to head of queue, and pop the end
+                last_post = listings[0]["data"]["name"]
                 for listing in reversed(listings):
                     last_names.appendleft(listing["data"]["name"])
                     if len(last_names) > num_pages_memory:
                         last_names.pop()
-                last_post = listings[0]["data"]["name"]
                 #log.info("last_post: " + listings[0]["data"]["title"])
                 check_matches(regex, listings)
             time.sleep(sleep_interval)
