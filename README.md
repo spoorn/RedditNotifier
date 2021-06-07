@@ -31,6 +31,6 @@ This script uses SMTP to send messages/text other emails/phone numbers.  You wil
 > ⚠️ Note: If you are trying to notify a phone via text message, be sure to enable MMS messaging on your phone.  If you are trying to notify via email, double check the Spam folder and some email servers may mark the email as spam.
 
 ### Running the script
-`cd` into the directory where you installed, then run `python src/redditnotifier.py`
+`cd` into the directory where you installed, then run `python src/redditnotifier.py` or `python3 src/redditnotifier.py`
 
 `Ctrl + C` to terminate the script.
