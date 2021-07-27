@@ -28,6 +28,8 @@ All setup and configurations are inputted in `config.properties` (see [propertie
 
 This script uses SMTP to send messages/text other emails/phone numbers.  You will need to provide an email for the SENDER (Gmail has been tested and works).  Recommend to use a non-important email as credentials will be stored in a configuration file - you can create a new dummy email.  The SENDER email is logged in via SMTP, so depending on the email server, you may need to allow access from "Less Secure Apps" (see https://support.google.com/accounts/answer/6010255 if you are using Gmail).
 
+> ⚠️Note: If you are running the script from a server such as Google Compute Engine, or you don't want to store your password directly in the config file, you can make use of an App Password instead: https://support.google.com/accounts/answer/185833?hl=en
+
 > ⚠️ Note: If you are trying to notify a phone via text message, be sure to enable MMS messaging on your phone.  If you are trying to notify via email, double check the Spam folder and some email servers may mark the email as spam.
 
 ### Running the script
