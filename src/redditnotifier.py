@@ -130,14 +130,19 @@ def getListings(subreddit, limit, old_headers, last_post, retries):
     raise Exception("Could not get listings within retries!")
 
 def check_matches(regex, listings):
-    keyword = re.compile(regex)
+    case_insensitive = config.get("case_insensitive")
+    keyword = None
+    if (case_insensitive):
+        keyword = re.compile(regex, re.I)
+    else:
+        keyword = re.compile(regex)
     titles = [x["data"]["title"] for x in listings]
     new_listings = [x["data"]["title"] + "\n\t\thttps://www.reddit.com" + x["data"]["permalink"] for x in listings]
     log.info(f"New Listings:\n\t" + '\n\t'.join(new_listings))
 
     i = 0
     for title in titles:
-        if re.search(keyword, title.lower()) is not None:
+        if re.search(keyword, title) is not None:
             log.info(f"Found a matching listing: {title}")
             act(regex, listings[i])
         i += 1
