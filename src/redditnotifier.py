@@ -63,7 +63,8 @@ def act(regex, listing):
     to_list = config.get("recipient_emails").data.split(",")
     try:
         [server.sendmail(user, to_entry, message.as_string()) for to_entry in to_list]
-    except smtplib.SMTPSenderRefused:
+    except (smtplib.SMTPSenderRefused, smtplib.SMTPServerDisconnected) as e:
+        log.error(e)
         log.info("Attempting to reconnect smtp...")
         server = connect_email()
         [server.sendmail(user, to_entry, message.as_string()) for to_entry in to_list]
@@ -216,3 +217,4 @@ if __name__ == "__main__":
         traceback.print_exc()
         log.info("Exiting")
         quit()
+
