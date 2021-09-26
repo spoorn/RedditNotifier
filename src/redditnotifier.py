@@ -57,13 +57,14 @@ def act(regex, listing):
     permalink = listing["data"]["permalink"]
     subreddit = listing["data"]["subreddit_name_prefixed"]
     title = listing["data"]["title"]
-    message = MIMEText(f"https://www.reddit.com{permalink}")
-    message['Subject'] = f"Found match for [{regex}] with title {title} on {subreddit}"
+    message = MIMEText(f"{title} - https://www.reddit.com{permalink}")
+    message['Subject'] = f"Found match for [{regex}] on {subreddit}"
     message['From'] = user
     to_list = config.get("recipient_emails").data.split(",")
     for i in range(email_retries):
         try:
             [server.sendmail(user, to_entry, message.as_string()) for to_entry in to_list]
+            break
         except (smtplib.SMTPSenderRefused, smtplib.SMTPServerDisconnected) as e:
             log.error(e)
             log.info("Attempting to reconnect smtp...")
