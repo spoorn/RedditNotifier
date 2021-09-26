@@ -16,6 +16,7 @@ config_filename = "config.properties"
 access_token = None
 log = None
 user = None
+email_retries = 10
 
 """ Setup logging """
 def setup_logging():
@@ -32,9 +33,8 @@ def setup_logging():
 
 """ Connects to email server via SMTP """
 def connect_email():
-    retries = int(config.get("email_login_retries").data)
     email_server = config.get("email_server").data
-    for i in range(retries):
+    for i in range(email_retries):
         try:
             global server
             log.info("Connecting to email server...")
@@ -58,16 +58,16 @@ def act(regex, listing):
     subreddit = listing["data"]["subreddit_name_prefixed"]
     title = listing["data"]["title"]
     message = MIMEText(f"https://www.reddit.com{permalink}")
-    message['Subject'] = f"Found match for [{regex}] on {subreddit}"
+    message['Subject'] = f"Found match for [{regex}] with title {title} on {subreddit}"
     message['From'] = user
     to_list = config.get("recipient_emails").data.split(",")
-    try:
-        [server.sendmail(user, to_entry, message.as_string()) for to_entry in to_list]
-    except (smtplib.SMTPSenderRefused, smtplib.SMTPServerDisconnected) as e:
-        log.error(e)
-        log.info("Attempting to reconnect smtp...")
-        server = connect_email()
-        [server.sendmail(user, to_entry, message.as_string()) for to_entry in to_list]
+    for i in range(email_retries):
+        try:
+            [server.sendmail(user, to_entry, message.as_string()) for to_entry in to_list]
+        except (smtplib.SMTPSenderRefused, smtplib.SMTPServerDisconnected) as e:
+            log.error(e)
+            log.info("Attempting to reconnect smtp...")
+            server = connect_email()
     log.info("Sent notification [" + message.get_payload() + "] to " + str(to_list))
 
 def getUserAgentHeaders():
@@ -163,6 +163,7 @@ if __name__ == "__main__":
     subreddit = config.get("subreddit").data
     api_key = config.get("api_key").data
     secret_key = config.get("secret_key").data
+    email_retries = int(config.get("email_login_retries").data)
     connect_email()
     headers = getUserAgentHeaders()
 
