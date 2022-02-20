@@ -10,13 +10,17 @@ import smtplib
 import traceback
 import re
 import os
+import signal
 
 config = Properties()
 config_filename = "config.properties"
+listing_snapshot_filepath = os.path.dirname(__file__) + "/../run/snapshots/listing_snapshot.txt"
 access_token = None
 log = None
 user = None
 email_retries = 10
+saved_snapshot = False
+listing_ids_snapshot = None
 
 """ Setup logging """
 def setup_logging():
@@ -149,6 +153,24 @@ def check_matches(regex, listings):
             act(regex, listings[i])
         i += 1
 
+def load_snapshot():
+    if (os.path.isfile(listing_snapshot_filepath)):
+        log.info("Loading snapshot from " + os.path.abspath(listing_snapshot_filepath))
+        with open(listing_snapshot_filepath, "r") as snapshot_file:
+            loaded_ids = snapshot_file.read().splitlines()
+            for loaded_id in loaded_ids:
+                listing_ids_snapshot.append(loaded_id)
+        log.info("Loaded snapshot IDs: " + str(list(listing_ids_snapshot)))
+
+def save_snapshot():
+    global saved_snapshot
+    if not saved_snapshot and listing_ids_snapshot:
+        log.info("Saving a snapshot of last " + str(int(limit) * 2) + " processed listings")
+        os.makedirs(os.path.dirname(listing_snapshot_filepath), exist_ok=True)
+        with open(listing_snapshot_filepath, "w") as snapshot_file:
+            snapshot_file.write('\n'.join(listing_ids_snapshot))
+        log.info("Saved listings snapshot to " + os.path.abspath(listing_snapshot_filepath))
+        saved_snapshot = True
 
 if __name__ == "__main__":
     setup_logging()
@@ -165,9 +187,16 @@ if __name__ == "__main__":
     api_key = config.get("api_key").data
     secret_key = config.get("secret_key").data
     email_retries = int(config.get("email_login_retries").data)
+
     connect_email()
     headers = getUserAgentHeaders()
 
+    # Load last saved snapshot
+    listing_ids_snapshot = deque(maxlen=int(limit) * 2)
+    load_snapshot()
+
+    # Register SIGTERM handler
+    signal.signal(signal.SIGTERM, save_snapshot)
 
     try:
         access_token = getToken(api_key, secret_key, headers, access_token_retries)
@@ -176,7 +205,7 @@ if __name__ == "__main__":
         i = 0
         num_checks_retro_check = int(config.get("num_checks_retro_check").data)
         num_pages_memory = int(config.get("num_pages_memory").data) * int(limit)
-        last_names = deque([])
+        last_names = deque([], maxlen=num_pages_memory)
         while 1:
             #log.info(f"deque size={len(last_names)}")
             if (i == num_checks_retro_check):
@@ -205,18 +234,34 @@ if __name__ == "__main__":
                 ret = getListings(subreddit, int(limit) * 2, headers, None, listings_query_retries)
                 listings = ret.json()["data"]["children"]
                 i += 1
+
+            # Save last listing queried, so subsequent queries only check after the last post
             if (len(listings) > 0):
-                # Left is the head of the queue, so we insert the new listings to head of queue, and pop the end
                 last_post = listings[0]["data"]["name"]
+
+            # Cross check listings with the snapshot loaded from file
+            new_listings = []
+            # Left is the head of the queue, so we insert the new listings to head of queue, and pop the end
+            for l in reversed(listings):
+                if l["data"]["id"] not in listing_ids_snapshot:
+                    new_listings.append(l)
+                last_names.appendleft(l["data"]["name"])
+            listings = new_listings
+            #log.info("last_post: " + listings[0]["data"]["title"])
+
+            if (len(listings) > 0): 
                 for listing in reversed(listings):
-                    last_names.appendleft(listing["data"]["name"])
-                    if len(last_names) > num_pages_memory:
-                        last_names.pop()
-                #log.info("last_post: " + listings[0]["data"]["title"])
+                    post_id = listing["data"]["id"]
+                    # We separately append to listing_ids_snapshot here instead of before the if condition because
+                    # listings can be received in different ordering, so we can't update listings and the snapshot
+                    # in one loop
+                    listing_ids_snapshot.append(post_id)
                 check_matches(regex, listings)
             time.sleep(sleep_interval)
     except:
         traceback.print_exc()
         log.info("Exiting")
         quit()
+    finally:
+        save_snapshot()
 
