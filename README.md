@@ -36,3 +36,13 @@ This script uses SMTP to send messages/text other emails/phone numbers.  You wil
 `cd` into the directory where you installed, then run `python src/redditnotifier.py` or `python3 src/redditnotifier.py`
 
 `Ctrl + C` to terminate the script.
+
+
+# Tips
+1. It's good practice to reboot or bounce systems every now and then.  If you are running the RedditNotifier script in the background constantly, the most up-to-date script is capable of collecting snapshots so that a reboot can re-load what was already queried previously.  You can schedule the script to be run in the background in a tmux session on reboot, and set the system to reboot every week:
+    - run `crontab -e` and open with your favorite text editor, then add the following:
+    ```python
+    @reboot tmux new -d redditnotifier && tmux send-keys -t redditnotifier.0 "python3 <path-to-RedditNotifier/src/redditnotifier.py>" ENTER
+    # Reboot on Sundays at 4 AM
+    0 4 * * 0 sudo reboot
+    ```
