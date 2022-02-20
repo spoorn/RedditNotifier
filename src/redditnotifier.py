@@ -19,8 +19,8 @@ access_token = None
 log = None
 user = None
 email_retries = 10
-saved_snapshot = False
 listing_ids_snapshot = None
+snapshot_dirty = False
 
 """ Setup logging """
 def setup_logging():
@@ -162,15 +162,14 @@ def load_snapshot():
                 listing_ids_snapshot.append(loaded_id)
         log.info("Loaded snapshot IDs: " + str(list(listing_ids_snapshot)))
 
+# Terminates after saving snapshot
 def save_snapshot():
-    global saved_snapshot
-    if not saved_snapshot and listing_ids_snapshot:
+    if listing_ids_snapshot:
         log.info("Saving a snapshot of last " + str(int(limit) * 2) + " processed listings")
         os.makedirs(os.path.dirname(listing_snapshot_filepath), exist_ok=True)
         with open(listing_snapshot_filepath, "w") as snapshot_file:
             snapshot_file.write('\n'.join(listing_ids_snapshot))
         log.info("Saved listings snapshot to " + os.path.abspath(listing_snapshot_filepath))
-        saved_snapshot = True
 
 if __name__ == "__main__":
     setup_logging()
@@ -194,9 +193,6 @@ if __name__ == "__main__":
     # Load last saved snapshot
     listing_ids_snapshot = deque(maxlen=int(limit) * 2)
     load_snapshot()
-
-    # Register SIGTERM handler
-    signal.signal(signal.SIGTERM, save_snapshot)
 
     try:
         access_token = getToken(api_key, secret_key, headers, access_token_retries)
@@ -256,12 +252,17 @@ if __name__ == "__main__":
                     # listings can be received in different ordering, so we can't update listings and the snapshot
                     # in one loop
                     listing_ids_snapshot.append(post_id)
+                    snapshot_dirty = True
                 check_matches(regex, listings)
+
+            # Save snapshot of listings
+            if snapshot_dirty:
+                save_snapshot()
+                snapshot_dirty = False
+
             time.sleep(sleep_interval)
     except:
         traceback.print_exc()
         log.info("Exiting")
         quit()
-    finally:
-        save_snapshot()
 
