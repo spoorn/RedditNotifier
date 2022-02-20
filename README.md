@@ -24,9 +24,9 @@ Download and extract zip under Releases: https://github.com/spoorn/RedditNotifie
 
 
 ### Configurations
-All setup and configurations are inputted in `config.properties` (see [properties file](https://github.com/spoorn/RedditNotifier/blob/main/config.properties) for documentation).
+All setup and configurations are inputted in [config.properties](https://github.com/spoorn/RedditNotifier/blob/main/config.properties).
 
-This script uses SMTP to send messages/text other emails/phone numbers.  You will need to provide an email for the SENDER (Gmail has been tested and works).  Recommend to use a non-important email as credentials will be stored in a configuration file - you can create a new dummy email.  The SENDER email is logged in via SMTP, so depending on the email server, you may need to allow access from "Less Secure Apps" (see https://support.google.com/accounts/answer/6010255 if you are using Gmail).
+This script uses SMTP to send messages/text other emails/phone numbers.  You will need to provide an email for the SENDER (GMail has been tested and works).  Recommend to use a non-important email as credentials will be stored in a configuration file - you can create a new dummy email.  The SENDER email is logged in via SMTP, so depending on the email server, you may need to allow access from "Less Secure Apps" (see https://support.google.com/accounts/answer/6010255 if you are using Gmail).
 
 > ⚠️Note: If you are running the script from a server such as Google Compute Engine, or you don't want to store your password directly in the config file, you can make use of an App Password instead: https://support.google.com/accounts/answer/185833
 
