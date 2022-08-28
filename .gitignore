@@ -1,2 +1,7 @@
 my*
 run/*
+.idea/*
+
+# Added by cargo
+
+/target
