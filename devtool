@@ -12,17 +12,20 @@ install_cross() {
 }
 
 build() {
-  install_cross
+  cargo build --release
+  mv target/release/reddit_notifier bin/
+  #install_cross
   
   # TODO: Once output-dir is in stable release, use that instead of copying over binaries/executables
   # Linux
-  cross build --release --target x86_64-unknown-linux-gnu
-  mv target/x86_64-unknown-linux-gnu/release/reddit_notifier bin/
+#  cross build --release --target x86_64-unknown-linux-gnu
+#  mv target/x86_64-unknown-linux-gnu/release/reddit_notifier bin/
   
   # Windows
-  rustup target add x86_64-pc-windows-msvc  # Installs the target
-  cross build --release --target x86_64-pc-windows-gnu
-  mv target/x86_64-pc-windows-gnu/release/reddit_notifier.exe bin/
+  # The linux binary seems to run fine on Powershell actually
+#  rustup target add x86_64-pc-windows-msvc  # Installs the target
+#  cross build --release --target x86_64-pc-windows-gnu
+#  mv target/x86_64-pc-windows-gnu/release/reddit_notifier.exe bin/
 }
 
 # Comment set +x out to show commands run
