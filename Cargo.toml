@@ -17,3 +17,5 @@ serde_json = "1.0.85"
 slice-deque = "0.3.0"
 lazy_static = "1.4.0"
 regex = "1.6.0"
+# Cross removed openssl from their docker: https://github.com/cross-rs/cross/issues/510.  This is a workaround.
+openssl = { version = "0.10", features = ["vendored"] }

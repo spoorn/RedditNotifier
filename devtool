@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Note: If developing on windows, you might need to run this command to get rid of /r in this script file:
+#   sed -i 's/\r$//' devtool
+# Or make sure your git has autocrlf off: https://stackoverflow.com/questions/29045140/env-bash-r-no-such-file-or-directory
+
+set -euo pipefail
+set -x
+
+install_cross() {
+  cargo install cross
+}
+
+build() {
+  install_cross
+  
+  # TODO: Once output-dir is in stable release, use that instead of copying over binaries/executables
+  # Linux
+  cross build --release --target x86_64-unknown-linux-gnu
+  mv target/x86_64-unknown-linux-gnu/release/reddit_notifier bin/
+  
+  # Windows
+  rustup target add x86_64-pc-windows-msvc  # Installs the target
+  cross build --release --target x86_64-pc-windows-gnu
+  mv target/x86_64-pc-windows-gnu/release/reddit_notifier.exe bin/
+}
+
+# Comment set +x out to show commands run
+set +x
+$@
