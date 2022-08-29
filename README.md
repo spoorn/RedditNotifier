@@ -1,6 +1,7 @@
 # RedditNotifier
-Simple python script that queries and scrapes a Reddit subreddit for new listings that match a given regex (regular expression).  The script will print out any matching listings, and can be setup to notify via email or text whenever a match is found.
+Simple script that queries and scrapes a Reddit subreddit for new listings that match a given regex (regular expression).  The script will print out any matching listings, and can be setup to notify via email or text whenever a match is found.
 
+There is a python version under the `python` branch.  main branch is written in rust now
 
 ## Instructions
 
@@ -10,9 +11,7 @@ Or
 Download and extract zip under Releases: https://github.com/spoorn/RedditNotifier/releases
 
 ### Prerequisites
-1. The python script uses various libraries which can be installed via `pip install <package>`.  A majority of these should come by default with Python.  Non-standard packages:
-    - [jproperties](https://pypi.org/project/jproperties/)
-2. The script accesses Reddit APIs to fetch subreddit listings.  You will need to provide an API Key and Secret Key for authentication:
+1. The script accesses Reddit APIs to fetch subreddit listings.  You will need to provide an API Key and Secret Key for authentication:
     - Go to https://www.reddit.com/prefs/apps/
     - Click `create another app...` at the bottom
     - Type in any name, and description
@@ -33,7 +32,9 @@ This script uses SMTP to send messages/text other emails/phone numbers.  You wil
 > ⚠️ Note: If you are trying to notify a phone via text message, be sure to enable MMS messaging on your phone.  If you are trying to notify via email, double check the Spam folder and some email servers may mark the email as spam.
 
 ### Running the script
-`cd` into the directory where you installed, then run `python src/redditnotifier.py` or `python3 src/redditnotifier.py`
+`cd` into the directory where you installed, then run via the pre-built binary with `./bin/reddit_notifier` 
+
+(or if you have the rust toolchain installed, via cargo with `cargo run`)
 
 `Ctrl + C` to terminate the script.
 
@@ -42,7 +43,7 @@ This script uses SMTP to send messages/text other emails/phone numbers.  You wil
 1. It's good practice to reboot or bounce systems every now and then.  If you are running the RedditNotifier script in the background constantly, the most up-to-date script is capable of collecting snapshots so that a reboot can re-load what was already queried previously.  You can schedule the script to be run in the background in a tmux session on reboot, and set the system to reboot every week:
     - run `crontab -e` and open with your favorite text editor, then add the following:
     ```python
-    @reboot tmux new -d redditnotifier && tmux send-keys -t redditnotifier.0 "python3 <path-to-RedditNotifier/src/redditnotifier.py>" ENTER
+    @reboot tmux new -d redditnotifier && tmux send-keys -t redditnotifier.0 "cd <path-to-RedditNotifier/> && ./bin/reddit_notifier" ENTER
     # Reboot on Sundays at 4 AM
     0 4 * * 0 sudo reboot
     ```
